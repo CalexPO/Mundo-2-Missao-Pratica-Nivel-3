@@ -1,0 +1,16 @@
+/* styles/Menu.module.css */
+.navbar {
+  background-color: black;
+  padding: 10px;
+}
+
+.navbar ul {
+  list-style: none;
+  display: flex;
+  justify-content: space-around;
+}
+
+.navlink {
+  color: white !important;
+  text-decoration: none;
+}
