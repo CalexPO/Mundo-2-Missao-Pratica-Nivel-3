@@ -2,31 +2,24 @@ import React, { useState, useEffect } from "react";
 import Head from "next/head";
 import Link from "next/link";
 import { Menu } from "../componentes/Menu";
-import styles from "../styles/Home.module.css";
 import { useRouter } from "next/router";
+import styles from "../styles/LivroDados.module.css";
+import ControleLivro from "../classes/controle/ControleLivros";
+import { Livro } from "../classes/modelo/Livro";
+import Editora from "../classes/modelo/Editora"; // Corrigindo a importação da interface Editora
 
-interface Editora {
-  id: number;
-  nome: string;
-}
-
-interface Livro {
-  titulo: string;
-  autor: string;
-  resumo: string;
-  codEditora: number;
-}
-
-const baseURL = "http://localhost:3000/api/livros";
 const editorasURL = "http://localhost:3000/api/editoras";
+
+const controleLivro = new ControleLivro();
 
 const LivroDados: React.FC = () => {
   const [titulo, setTitulo] = useState("");
   const [autor, setAutor] = useState("");
   const [resumo, setResumo] = useState("");
-  const [codEditora, setCodEditora] = useState(0);
+  const [codEditora, setCodEditora] = useState<number | string>(""); // Inicialize com uma string vazia para evitar conflito de tipos
   const [editoras, setEditoras] = useState<Editora[]>([]);
-  
+  const [editoraSelecionada, setEditoraSelecionada] = useState<Editora | null>(null); // Estado para armazenar a editora selecionada
+
   const router = useRouter();
 
   useEffect(() => {
@@ -36,6 +29,10 @@ const LivroDados: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setEditoras(data);
+          if (data.length > 0) {
+            setCodEditora(String(data[0].id)); // Converta o ID para string
+            setEditoraSelecionada(data[0]); // Defina a primeira editora como selecionada
+          }
         } else {
           console.error("Erro ao buscar editoras:", response.statusText);
         }
@@ -46,37 +43,30 @@ const LivroDados: React.FC = () => {
     fetchEditoras();
   }, []);
 
-  const incluirLivro = async (livro: Livro) => {
-    try {
-      const response = await fetch(baseURL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(livro),
-      });
-      const result = await response.ok;
-      if (result) {
-        router.push("/LivroLista");
-      }
-    } catch (error) {
-      console.error("Erro ao incluir livro:", error);
-    }
-  };
-
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const livro: Livro = {
+      codigo: 0, // Defina um valor adequado para o código do livro
       titulo,
-      autor,
+      autores: [autor], // Atualizado para utilizar um array de autores
       resumo,
-      codEditora,
+      codEditora: parseInt(String(codEditora)) // Garantindo que seja número
     };
-    incluirLivro(livro);
+    if (editoraSelecionada) {
+      livro.codEditora = editoraSelecionada.codEditora; // Atribua o id da editora ao codEditora
+    }
+    
+    controleLivro.incluir(livro); // Utilizando o método incluir do controle de livros
+    router.push("/LivroLista"); // Redirecionando para a tela LivroLista após incluir o livro
   };
 
   const handleEditoraChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    setCodEditora(parseInt(event.target.value));
+    const selectedId = event.target.value;
+    const selectedEditora = editoras.find(editora => String(editora.codEditora) === selectedId);
+    if (selectedEditora) {
+      setCodEditora(selectedId);
+      setEditoraSelecionada(selectedEditora);
+    }
   };
 
   return (
@@ -93,31 +83,53 @@ const LivroDados: React.FC = () => {
         <h1 className={styles.title}>Incluir Novo Livro</h1>
 
         <form onSubmit={handleSubmit}>
-          <label>
-            Título:
-            <input type="text" value={titulo} onChange={(e) => setTitulo(e.target.value)} />
-          </label>
-          <label>
-            Autor:
-            <input type="text" value={autor} onChange={(e) => setAutor(e.target.value)} />
-          </label>
-          <label>
-            Resumo:
-            <textarea value={resumo} onChange={(e) => setResumo(e.target.value)} />
-          </label>
-          <label>
-            Editora:
-            <select value={codEditora} onChange={handleEditoraChange}>
+          <div className={styles.formGroup}>
+            <label htmlFor="titulo">Título:</label>
+            <input 
+              type="text" 
+              className={`form-control ${styles.input}`} 
+              id="titulo" 
+              value={titulo} 
+              onChange={(e) => setTitulo(e.target.value)} 
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="autor">Autor:</label>
+            <input 
+              type="text" 
+              className={`form-control ${styles.input}`} 
+              id="autor" 
+              value={autor} 
+              onChange={(e) => setAutor(e.target.value)} 
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="resumo">Resumo:</label>
+            <textarea 
+              className={`form-control ${styles.textarea}`} 
+              id="resumo" 
+              value={resumo} 
+              onChange={(e) => setResumo(e.target.value)} 
+            />
+          </div>
+          <div className={styles.formGroup}>
+            <label htmlFor="editora">Editora:</label>
+            <select 
+              className={`form-control ${styles.select}`} 
+              id="editora" 
+              value={codEditora} 
+              onChange={handleEditoraChange}
+            >
               {editoras.map(editora => (
-                <option key={editora.id} value={editora.id}>{editora.nome}</option>
+                <option key={editora.codEditora} value={editora.codEditora}>{editora.nome}</option>
               ))}
             </select>
-          </label>
-          <button type="submit">Incluir</button>
+          </div>
+          <button type="submit" className={`btn btn-primary ${styles.button}`}>Incluir</button>
         </form>
-        <Link href="/LivroLista">
-          <div>Voltar para a Lista de Livros</div>
-        </Link>
+        <div className={styles.link}>
+          <Link href="/LivroLista">Voltar para a Lista de Livros</Link>
+        </div>
       </main>
     </div>
   );

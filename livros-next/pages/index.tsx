@@ -16,7 +16,7 @@ const Home: React.FC = () => {
       <Menu />
 
       <main>
-        <h1 className={styles.title}>Bem-vindo à Lista de Livros</h1>
+        <h1 className={styles.title}>Bem-vindo à Catálogo de Livros</h1>
         <p>
           Esta é a página inicial do projeto de gerenciamento de livros. Navegue até a lista de livros para ver e gerenciar seus livros.
         </p>

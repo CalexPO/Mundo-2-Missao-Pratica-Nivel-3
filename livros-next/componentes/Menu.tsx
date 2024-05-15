@@ -14,7 +14,12 @@ export const Menu: React.FC = () => {
         </li>
         <li>
           <Link href="/LivroLista" legacyBehavior>
-            <a className={styles.navlink}>Lista de Livros</a>
+            <a className={styles.navlink}>Catálogo de Livros</a>
+          </Link>
+        </li>
+        <li>
+          <Link href="/LivroDados" legacyBehavior>
+            <a className={styles.navlink}>Novos Dados</a>
           </Link>
         </li>
       </ul>
